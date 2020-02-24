@@ -5,13 +5,16 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$HostName,
 
-    [Parameter(Mandatory=$true, ParameterSetName='RootPassword')]
-    [string]$RootPassword,
+    [Parameter(Mandatory=$true)]
+    [string]$UserName,
 
-    [Parameter(Mandatory=$true, ParameterSetName='RootPublicKey')]
-    [string]$RootPublicKey,
+    [Parameter(Mandatory=$true, ParameterSetName='UserPassword')]
+    [string]$UserPassword,
 
-    [string]$WiFiNetwork,
+    [Parameter(Mandatory=$true, ParameterSetName='UserPublicKey')]
+    [string]$UserPublicKey,
+
+    [string]$WiFiSsid,
 
     [string]$WiFiPassword
 )
@@ -22,7 +25,7 @@ if (-not $Path) {
     $Path = '.\user-data'
 }
 
-if ($WiFiNetwork) {
+if ($WiFiSsid) {
     $WiFiContent = @"
 
  - content: |
@@ -36,7 +39,7 @@ if ($WiFiNetwork) {
        ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
        update_config=1
        network={
-           ssid="$WiFiNetwork"
+           ssid="$WiFiSsid"
            psk="$WiFiPassword"
            proto=RSN
            key_mgmt=WPA-PSK
@@ -53,18 +56,28 @@ if ($WiFiNetwork) {
 "@
 }
 
-$sectionPasswd = if ($RootPassword) {
+$sectionUsersPassword = if ($UserPassword) {
     @"
-password: $RootPassword
-chpasswd: { expire: False }
-ssh_pwauth: True
+    plain_text_passwd: $UserPassword
+    lock_passwd: false
+    ssh_pwauth: true
 "@
-} elseif ($RootPublicKey) {
+} elseif ($UserPublicKey) {
     @"
-ssh_authorized_keys:
-  - $RootPublicKey
+    ssh_authorized_keys:
+      - $UserPublicKey
 "@
 }
+
+$sectionUsers = @"
+users:
+  - name: $UserName
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users,docker,video,input
+$sectionUsersPassword
+    chpasswd: { expire: false }
+"@
 
 $sectionWriteFiles = @"
 write_files:
@@ -94,7 +107,7 @@ $userdata = @"
 hostname: $HostName
 manage_etc_hosts: true
 
-$sectionPasswd
+$sectionUsers
 
 $sectionWriteFiles
 $sectionRunCmd

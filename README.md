@@ -48,21 +48,21 @@ Returns the path of downloaded file.
 ### New-UserDataFile
 
 ```
-New-UserDataFile.ps1 -HostName <string> -RootPassword <string> [-Path <string>] [-WiFiNetwork <string>] [-WiFiPassword <string>] [<CommonParam
-eters>]
-New-UserDataFile.ps1 -HostName <string> -RootPublicKey <string> [-Path <string>] [-WiFiNetwork <string>] [-WiFiPassword <string>] [<CommonPara
-meters>]
+New-UserDataFile.ps1 -HostName <string> -UserName <string> -UserPassword <string> [-Path <string>] [-WiFiSsid <string>] [-WiFiPassword <string>] [<CommonParameters>]
+New-UserDataFile.ps1 -HostName <string> -UserName <string> -UserPublicKey <string> [-Path <string>] [-WiFiSsid <string>] [-WiFiPassword <string>] [<CommonParameters>]
 ```
 
 Creates an `user-data` file for custom builds. See [New-CustomHypriotImage](#New-CustomHypriotImage).
 
-You must use `-RootPassword` to set a password or `-RootPublicKey` to set a public key for default `root` user.
+The initial setup will create a new user. You must provide an user name via `-UserName` and then use `-UserPassword` to set a password or `-UserPublicKey` to set a public key for this user.
 
-You may configure wireless network using `-WiFiNetwork` and `-WiFiPassword` options. 
+You may configure wireless network using `-WiFiSsid` and `-WiFiPassword` options. 
 
 Use `-Path` parameter to set the output file. If not informed, `.\user-data` will be used.
 
 Returns the path of created file.
+
+For more options please see [cloud-init documentation](https://cloudinit.readthedocs.io/en/latest/topics/examples.html). You can also check [this sample `user-data` file](https://github.com/hypriot/image-builder-rpi/blob/master/builder/files/boot/user-data) from Hypriot.
 
 
 
@@ -92,9 +92,10 @@ Returns the path of created file.
 
 ```powershell
 $hostname = 'rpi'
-$rootPublicKey = Get-Content "$env:USERPROFILE\.ssh\id_rsa.pub"
+$userName = 'jedi'
+$userPublicKey = Get-Content "$env:USERPROFILE\.ssh\id_rsa.pub"
 
-$userDataFile = .\New-UserDataFile.ps1 -HostName $hostname -RootPublicKey $rootPublicKey -WiFiNetwork 'darth' -WiFiPassword 'vader'
+$userDataFile = .\New-UserDataFile.ps1 -HostName $hostName -UserName $userName -UserPublicKey $userPublicKey -WiFiSsid 'darth' -WiFiPassword 'vader'
 
 $imageFile = .\Get-HypriotImage.ps1
 
